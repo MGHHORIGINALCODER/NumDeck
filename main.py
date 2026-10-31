@@ -94,11 +94,11 @@ Default Volume: {self.DefaultVolume}{F.WHITE}
             input()
             self.MainMenu()
     
-        if Option == 0:
+        if Option == 1:
             self.SoundBoardSystem()
-        elif Option == 1:
-            self.SetUp()
         elif Option == 2:
+            self.SetUp()
+        elif Option == 3:
             sys.exit(1)
             return
 
