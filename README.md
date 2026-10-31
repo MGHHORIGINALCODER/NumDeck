@@ -9,4 +9,4 @@ When the Application is open, follow the setup Instructions.
 
 # Known Problems
 
-* The option choice is bugged, Which means on Use it should be [Option-1] so Option 1 should be Option 0
+* -No none Problems-
