@@ -15,7 +15,12 @@ class Main():
         self.Setting_File="config.ini"
         self.DefaultDir=""
         self.SelectedSounds=[]
+        self.Page=1
+        self.SelectedFunctions=[]
         self.Sounds=[]
+        self.ValidFiles=[]
+
+        
         self.Offset=-1
         if os.path.exists(self.Setting_File):
 
@@ -25,34 +30,57 @@ class Main():
             self.SetUp()
 
 
-    def Back(self):
+    def Back(self,IsSound=True):
         try:
             if self.Offset > -1:
                 self.Offset-=12
                 if self.Offset <=-1:
                     self.Offset=-1
-                self.SelectedSounds=[]
-                self.SoundBoardSystem()
+
+
+                if self.Page > 1:
+                    self.Page-=1
+               
+                
+                if not IsSound:
+                    self.SelectedFunctions=[]
+                    
+                    self.FunctionBoardSystem()
+                else:
+                    self.SelectedSounds=[]
+                    self.SoundBoardSystem()
         except:
             return
 
-    def Front(self):
+    def Front(self,IsSound=True):
         try:
-            if not len(self.Sounds)<=self.Offset:
+            if not len(self.Sounds)<=self.Offset and IsSound:
+                
+                
+                self.Page+=1
+                self.SelectedSounds=[]
                 
                 
                 self.SelectedSounds=[]
                 self.SoundBoardSystem()
+            elif not len(self.ValidFiles)<=self.Offset and not IsSound:
+                self.Page+=1
+                if not IsSound:
+                    self.SelectedFunctions=[]
+                    self.FunctionBoardSystem()
+            
         except:
             return
 
 
     def Program(self):
         # settings
+        timeout(1)
         self.Microphone=self.ReadSetting("DEFAULT","microphone")
         self.id=self.ReadSetting("DEFAULT","id")
         self.DefaultVolume=self.ReadSetting("DEFAULT","volume")
         self.SoundFolder=self.ReadSetting("DEFAULT","sound_folder")
+        self.FunctionFolder=self.ReadSetting("FF","ffdir")
         self.BackB=self.ReadSetting("CONTROLS","back")
         self.Next=self.ReadSetting("CONTROLS","next")
         self.Prev=self.ReadSetting("CONTROLS","prev")
@@ -63,6 +91,15 @@ class Main():
         self.Inter5=self.ReadSetting("CONTROLS","inter5")
         self.Inter6=self.ReadSetting("CONTROLS","inter6")
         self.Cancel=self.ReadSetting("CONTROLS","cancel")
+        self.Offset=-1
+        self.Page=1
+        self.Files=os.listdir(self.SoundFolder)
+        for i in os.listdir(self.FunctionFolder):
+            if str(i).endswith(".py"):
+                self.ValidFiles.append(i)
+        for i in self.Files:
+            if i.endswith(".mp3") or i.endswith(".wav"):
+                self.Sounds.append(i)
 
         self.DefaultDir=self.SoundFolder
         os.system("cls")
@@ -81,13 +118,16 @@ Default Volume: {self.DefaultVolume}{F.WHITE}
 
 1: Open SoundBoard
 
-2: Set Up
+2: Function Board
 
-3: Close
+3: Set Up
+
+4: Close
         """)
     
         try:
-            Option=int(input("Select Option: "))
+            timeout(1)
+            Option=int(keyboard.read_key())
         except:
             os.system("cls")
             print("OPTION CANT BE STRING!")
@@ -97,10 +137,56 @@ Default Volume: {self.DefaultVolume}{F.WHITE}
         if Option == 1:
             self.SoundBoardSystem()
         elif Option == 2:
-            self.SetUp()
+            self.FunctionBoardSystem()
         elif Option == 3:
+            self.SetUp()
+        elif Option == 4:
             sys.exit(1)
             return
+
+    def FunctionBoardSystem(self):
+        os.system("cls")
+        self.SelectedFunctions=[]
+        for s in range(6):
+            try:
+                self.Offset+=1
+                self.SelectedFunctions.append(self.ValidFiles[self.Offset])
+                print(f"{s+1}: {self.ValidFiles[self.Offset]}\n")
+            except:
+                continue
+    
+        print(f"\n\nPage Section: {self.Page}/{round(len(self.ValidFiles)/6)}")
+
+        while True:
+            Event=keyboard.read_event()
+            if Event.event_type==keyboard.KEY_DOWN:
+                if Event.name==self.Prev:
+                    self.Back(False)
+                elif Event.name == self.Next:
+                    self.Front(False)
+                elif Event.name == self.Inter1:
+                    self.RunFile(0)
+                elif Event.name == self.Inter2:
+                    self.RunFile(1)
+                elif Event.name == self.Inter3:
+                    self.RunFile(2)
+                elif Event.name == self.Inter4:
+                    self.RunFile(3)
+                elif Event.name == self.Inter5:
+                    self.RunFile(4)
+                elif Event.name == self.Inter6:
+                    self.RunFile(5)
+                elif Event.name==self.BackB:
+                    os.system("cls")
+                    self.MainMenu()
+    def RunFile(self,FileNumber):
+        try:
+            path=os.path.join(self.FunctionFolder,self.SelectedFunctions[FileNumber])
+            with open(path, "r") as f:
+                CONTEXT=f.read()
+            exec(CONTEXT)
+        except Exception as ERROR3:
+            print(f"{F.RED}ERROR: {ERROR3}")
 
     def PlaySound(self, SoundNumber,Volume):
         try:
@@ -128,22 +214,17 @@ Default Volume: {self.DefaultVolume}{F.WHITE}
 Default Volume: {self.DefaultVolume}{F.WHITE}
                 """)
  
-        self.Files=os.listdir(self.SoundFolder)
-        self.Sounds=[]
-        
-        for i in self.Files:
-            if i.endswith(".mp3") or i.endswith(".wav"):
-                self.Sounds.append(i)
+    
         
         for s in range(6):
             try:
                 self.Offset+=1
                 self.SelectedSounds.append(self.Sounds[self.Offset])
-                print(f"{self.Offset}: {self.Sounds[self.Offset]}\n")
+                print(f"{s+1}: {self.Sounds[self.Offset]}\n")
             except:
                 continue
 
-        print(f"\n\nPage Section: {self.Offset}")
+        print(f"\n\nPage Section: {self.Page}/{round(len(self.Sounds)/6)}")
         
         while True:
             Event=keyboard.read_event()
@@ -192,14 +273,15 @@ Default Volume: {self.DefaultVolume}{F.WHITE}
         localint_=0
         for i in self.Microphones:
             
-            print(f"\n{localint_}: {i}\n")
+            print(f"\n{localint_+1}: {i}\n")
             localint_+=1
         localint_=0
 
         try:
-            self.MicrophoneSelection=int(input("Input Microphone Number: "))
-            self.DefaultVolume=float(input("\nInput Default Volume: "))
+            self.MicrophoneSelection=int(keyboard.read_key())-1
+            self.DefaultVolume=float(input("\nInput Default Volume: "))/100
             self.SoundFolder = filedialog.askdirectory(title='Please choose a Sound Folder.')
+            self.FunctionFolder = filedialog.askdirectory(title='Please choose a Function Folder.')
             os.system("cls")
             print("Set a Key for 'Back'! (Press, to set a key)")
             self.BackB= keyboard.read_key()
@@ -278,6 +360,8 @@ Default Volume: {self.DefaultVolume}{F.WHITE}
                               "inter5": self.Inter5,
                               "inter6": self.Inter6,
                               "cancel": self.Cancel}
+
+        config['FF'] = {"ffdir":self.FunctionFolder}
 
         with open(self.Setting_File, "w") as f:
             config.write(f)
